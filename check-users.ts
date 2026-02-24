@@ -1,0 +1,5 @@
+import Database from "better-sqlite3";
+const db = new Database("finance_diagnosis.db");
+const users = db.prepare("SELECT username, license_limit FROM users").all();
+console.log(JSON.stringify(users, null, 2));
+db.close();

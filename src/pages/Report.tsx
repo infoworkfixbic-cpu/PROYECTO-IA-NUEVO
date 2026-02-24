@@ -44,10 +44,10 @@ export default function Report({ user }: { user: any }) {
         for (let i = 0; i < elements.length; i++) {
           const el = elements[i] as HTMLElement;
           const style = window.getComputedStyle(el);
-          // Check for oklch in common color properties and replace with computed rgb
-          if (style.color.includes("oklch")) el.style.color = style.color;
-          if (style.backgroundColor.includes("oklch")) el.style.backgroundColor = style.backgroundColor;
-          if (style.borderColor.includes("oklch")) el.style.borderColor = style.borderColor;
+          // Check for oklch/oklab in common color properties and replace with computed rgb
+          if (style.color.includes("oklch") || style.color.includes("oklab")) el.style.color = style.color;
+          if (style.backgroundColor.includes("oklch") || style.backgroundColor.includes("oklab")) el.style.backgroundColor = style.backgroundColor;
+          if (style.borderColor.includes("oklch") || style.borderColor.includes("oklab")) el.style.borderColor = style.borderColor;
         }
       }
     });
@@ -205,6 +205,70 @@ export default function Report({ user }: { user: any }) {
                   )} />
                 </div>
               ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Evolución Financiera */}
+        <div className="space-y-8">
+          <h3 className="text-indigo-900 font-bold text-xl flex items-center gap-2">
+            <BarChart3 className="text-indigo-600" size={24} /> Evolución Financiera
+          </h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="p-8 bg-white rounded-2xl border border-stone-100 shadow-sm">
+              <p className="text-xs font-bold text-stone-400 uppercase mb-6">Evolución de Utilidad Neta</p>
+              <div className="h-[250px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={ratios}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                    <XAxis dataKey="period" axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#a8a29e'}} />
+                    <YAxis axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#a8a29e'}} />
+                    <Tooltip 
+                      contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                      formatter={(value: any) => [formatCurrency(value), 'Utilidad Neta']}
+                    />
+                    <Line type="monotone" dataKey="netProfit" stroke="#4f46e5" strokeWidth={3} dot={{ r: 4, fill: '#4f46e5' }} activeDot={{ r: 6 }} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            <div className="p-8 bg-white rounded-2xl border border-stone-100 shadow-sm">
+              <p className="text-xs font-bold text-stone-400 uppercase mb-6">Evolución de Margen Bruto (%)</p>
+              <div className="h-[250px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={ratios}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                    <XAxis dataKey="period" axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#a8a29e'}} />
+                    <YAxis axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#a8a29e'}} unit="%" />
+                    <Tooltip 
+                      contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                      formatter={(value: any) => [formatPercent(value), 'Margen Bruto']}
+                    />
+                    <Line type="monotone" dataKey="grossMargin" stroke="#10b981" strokeWidth={3} dot={{ r: 4, fill: '#10b981' }} activeDot={{ r: 6 }} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-8 bg-white rounded-2xl border border-stone-100 shadow-sm">
+            <p className="text-xs font-bold text-stone-400 uppercase mb-6">Comparativa de Endeudamiento (%)</p>
+            <div className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={ratios}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                  <XAxis dataKey="period" axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#a8a29e'}} />
+                  <YAxis axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#a8a29e'}} unit="%" />
+                  <Tooltip 
+                    cursor={{fill: '#f8fafc'}}
+                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                    formatter={(value: any) => [`${value.toFixed(2)}%`, 'Endeudamiento']}
+                  />
+                  <Bar dataKey="debtRatio" fill="#6366f1" radius={[4, 4, 0, 0]} barSize={40} />
+                </BarChart>
+              </ResponsiveContainer>
             </div>
           </div>
         </div>

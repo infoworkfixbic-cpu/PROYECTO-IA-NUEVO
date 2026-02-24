@@ -1,6 +1,14 @@
 import { Outlet, Link, useNavigate } from "react-router-dom";
 import { LayoutDashboard, PlusCircle, LogOut, TrendingUp, ShieldCheck, Shield } from "lucide-react";
 
+const Logo = () => (
+  <svg viewBox="0 0 100 100" className="w-10 h-10">
+    <circle cx="50" cy="50" r="45" fill="none" stroke="#10069f" strokeWidth="2" strokeDasharray="20 10" />
+    <path d="M30 45 L45 65 L55 55 L75 35" fill="none" stroke="#10069f" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M25 40 L40 60 L50 50 L70 30" fill="none" stroke="#32cd32" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" opacity="0.8" />
+  </svg>
+);
+
 export default function Layout({ user, onLogout }: { user: any; onLogout: () => void }) {
   const navigate = useNavigate();
 
@@ -14,11 +22,17 @@ export default function Layout({ user, onLogout }: { user: any; onLogout: () => 
       {/* Sidebar */}
       <aside className="w-64 bg-linear-to-b from-white to-[#10069f] flex flex-col border-r border-stone-200 shadow-xl">
         <div className="p-6 border-b border-stone-100">
-          <div className="flex items-center gap-2 mb-2 text-[#10069f]">
-            <ShieldCheck size={24} />
-            <h1 className="text-xl font-bold tracking-tight">Workfix</h1>
+          <div className="flex items-center gap-2 mb-2">
+            <Logo />
+            <div>
+              <h1 className="text-xl font-black tracking-tighter leading-none">
+                <span className="text-[#10069f]">WORK</span>
+                <span className="text-[#32cd32]">FIX</span>
+              </h1>
+              <p className="text-[8px] text-stone-400 font-bold uppercase tracking-[0.2em] mt-0.5">Consulting</p>
+            </div>
           </div>
-          <p className="text-[10px] text-stone-400 uppercase tracking-widest font-semibold">Diagnóstico Financiero IA</p>
+          <p className="text-[9px] text-stone-400 uppercase tracking-widest font-bold mt-2">Diagnóstico Financiero IA</p>
         </div>
 
         <nav className="flex-1 p-4 space-y-2">

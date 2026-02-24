@@ -43,9 +43,12 @@ db.exec(`
 
 // Seed default users
 const insertUser = db.prepare("INSERT OR IGNORE INTO users (username, password, license_limit) VALUES (?, ?, ?)");
-insertUser.run("admin", "admin123", 10);
-insertUser.run("workfix", "workfix2026", 20);
-insertUser.run("administrador123", "workfix2026", 20);
+insertUser.run("admin", "admin123", 5);
+insertUser.run("workfix", "workfix2026", 5);
+insertUser.run("administrador123", "workfix2026", 5);
+
+// Ensure all existing users have the 5 limit as requested
+db.prepare("UPDATE users SET license_limit = 5").run();
 
 async function startServer() {
   const app = express();
