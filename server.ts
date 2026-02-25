@@ -48,7 +48,8 @@ insertUser.run("workfix", "workfix2026", 5);
 insertUser.run("administrador123", "workfix2026", 5);
 
 // Ensure all existing users have the 5 limit as requested
-db.prepare("UPDATE users SET license_limit = 5").run();
+const updateResult = db.prepare("UPDATE users SET license_limit = 5").run();
+console.log(`Updated ${updateResult.changes} users to license_limit = 5`);
 
 async function startServer() {
   const app = express();
@@ -83,6 +84,7 @@ async function startServer() {
     const { username, password } = req.body;
     const user = db.prepare("SELECT * FROM users WHERE username = ? AND password = ?").get(username, password) as any;
     if (user) {
+      console.log(`User ${username} logged in. License limit: ${user.license_limit}`);
       res.json({ id: user.id, username: user.username, license_limit: user.license_limit, diagnoses_count: user.diagnoses_count });
     } else {
       res.status(401).json({ error: "Invalid credentials" });

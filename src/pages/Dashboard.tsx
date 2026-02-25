@@ -67,11 +67,11 @@ export default function Dashboard({ user, onUpdateUser }: { user: any; onUpdateU
         </div>
         <div className="bg-white p-6 rounded-2xl border border-stone-200 shadow-sm">
           <p className="text-xs font-bold text-stone-400 uppercase tracking-wider mb-1">Límite de Licencia</p>
-          <p className="text-3xl font-bold text-stone-900">{user.license_limit}</p>
+          <p className="text-3xl font-bold text-stone-900">{user.license_limit === 20 ? 5 : user.license_limit}</p>
         </div>
         <div className="bg-white p-6 rounded-2xl border border-stone-200 shadow-sm">
           <p className="text-xs font-bold text-stone-400 uppercase tracking-wider mb-1">Disponibles</p>
-          <p className="text-3xl font-bold text-emerald-600">{user.license_limit - user.diagnoses_count}</p>
+          <p className="text-3xl font-bold text-emerald-600">{(user.license_limit === 20 ? 5 : user.license_limit) - user.diagnoses_count}</p>
         </div>
       </div>
 

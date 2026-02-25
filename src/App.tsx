@@ -6,6 +6,8 @@ import NewDiagnosis from "./pages/NewDiagnosis";
 import Report from "./pages/Report";
 import Consent from "./pages/Consent";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
+import Pricing from "./pages/Pricing";
+import Landing from "./pages/Landing";
 import Layout from "./components/Layout";
 
 export default function App() {
@@ -49,7 +51,8 @@ export default function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/login" element={user ? <Navigate to="/" /> : <Login onLogin={handleLogin} />} />
+        <Route path="/" element={user ? <Navigate to="/dashboard" /> : <Landing />} />
+        <Route path="/login" element={user ? <Navigate to="/dashboard" /> : <Login onLogin={handleLogin} />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
         
         {/* Consent Route */}
@@ -57,7 +60,7 @@ export default function App() {
           path="/consent" 
           element={
             user ? (
-              consentAccepted ? <Navigate to="/" /> : <Consent onAccept={handleAcceptConsent} />
+              consentAccepted ? <Navigate to="/dashboard" /> : <Consent onAccept={handleAcceptConsent} />
             ) : (
               <Navigate to="/login" />
             )
@@ -74,9 +77,10 @@ export default function App() {
             )
           }
         >
-          <Route path="/" element={<Dashboard user={user} onUpdateUser={handleUpdateUser} />} />
+          <Route path="/dashboard" element={<Dashboard user={user} onUpdateUser={handleUpdateUser} />} />
           <Route path="/new" element={<NewDiagnosis user={user} onUpdateUser={handleUpdateUser} />} />
           <Route path="/report/:id" element={<Report user={user} />} />
+          <Route path="/pricing" element={<Pricing user={user} />} />
         </Route>
       </Routes>
     </Router>

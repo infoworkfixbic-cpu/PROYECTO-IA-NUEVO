@@ -1,10 +1,11 @@
 import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronRight, ChevronLeft, Save, Loader2, Info, Search } from "lucide-react";
+import { ChevronRight, ChevronLeft, Save, Loader2, Info, Search, AlertTriangle } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
-import { generateFinancialDiagnosis, FinancialData } from "../services/geminiService";
+import { generateFinancialDiagnosis, extractFinancialDataFromPDF, FinancialData } from "../services/geminiService";
 import { CIIU_CODES, CIIU_SECTIONS } from "../constants/ciiuCodes";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp, FileText, Upload, CheckCircle2 } from "lucide-react";
+import { cn } from "../utils/utils";
 
 const STEPS = ["Datos Generales", "Estado de Resultados", "Balance General", "Cartera y Proveedores"];
 
@@ -16,6 +17,13 @@ export default function NewDiagnosis({ user, onUpdateUser }: { user: any; onUpda
   const [ciiuSearch, setCiiuSearch] = useState("");
   const [omitAdditional, setOmitAdditional] = useState(false);
   const [isCiiuOpen, setIsCiiuOpen] = useState(false);
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const [pdfSuccess, setPdfSuccess] = useState(false);
+
+  const effectiveLimit = user.license_limit === 20 ? 5 : user.license_limit;
+  const isBlocked = user.diagnoses_count >= effectiveLimit;
+
+  const WHATSAPP_URL = "https://wa.me/573021212225?text=Hola%20quiero%20mejorar%20mi%20plan%20del%20Diagnóstico%20Financiero%20IA";
 
   const [companyInfo, setCompanyInfo] = useState({
     companyName: "",
@@ -57,6 +65,76 @@ export default function NewDiagnosis({ user, onUpdateUser }: { user: any; onUpda
 
   const handleInfoChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setCompanyInfo({ ...companyInfo, [e.target.name]: e.target.value });
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.type !== "application/pdf") {
+      alert("Por favor, sube un archivo PDF.");
+      return;
+    }
+
+    setPdfLoading(true);
+    setPdfSuccess(false);
+
+    try {
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        const base64 = (event.target?.result as string).split(",")[1];
+        try {
+          const extractedData = await extractFinancialDataFromPDF(base64);
+          
+          // Update company info
+          setCompanyInfo(prev => ({
+            ...prev,
+            companyName: extractedData.companyName || prev.companyName,
+            sector: extractedData.sector || prev.sector,
+            yearConstituted: extractedData.yearConstituted || prev.yearConstituted,
+          }));
+
+          // Update financial data
+          if (extractedData.data && extractedData.data.length > 0) {
+            setNumPeriods(extractedData.data.length);
+            const newFinancialData = extractedData.data.map((d: any) => ({
+              period: d.period,
+              incomeStatement: { ...d.incomeStatement },
+              balanceSheet: { ...d.balanceSheet }
+            }));
+            
+            // Pad with empty data if less than 3 periods
+            while (newFinancialData.length < 3) {
+              newFinancialData.push({
+                period: `Periodo ${newFinancialData.length + 1}`,
+                incomeStatement: {
+                  operatingIncome: 0, nonOperatingIncome: 0, costs: 0, adminExpenses: 0,
+                  salesExpenses: 0, interest: 0, nonOperatingExpenses: 0, taxes: 0,
+                },
+                balanceSheet: {
+                  currentAssets: 0, nonCurrentAssets: 0, accountsReceivable: 0, totalAssets: 0,
+                  currentLiabilities: 0, nonCurrentLiabilities: 0, accountsPayable: 0, totalLiabilities: 0,
+                  equity: 0,
+                },
+              });
+            }
+            setFinancialData(newFinancialData);
+          }
+          
+          setPdfSuccess(true);
+        } catch (err) {
+          console.error(err);
+          alert("No se pudo procesar el PDF. Por favor, ingresa los datos manualmente.");
+        } finally {
+          setPdfLoading(false);
+        }
+      };
+      reader.readAsDataURL(file);
+    } catch (err) {
+      console.error(err);
+      alert("Error al leer el archivo.");
+      setPdfLoading(false);
+    }
   };
 
   const [financialData, setFinancialData] = useState<FinancialData[]>(
@@ -149,6 +227,48 @@ export default function NewDiagnosis({ user, onUpdateUser }: { user: any; onUpda
     }
   };
 
+  if (isBlocked) {
+    return (
+      <div className="max-w-2xl mx-auto py-20">
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="bg-white rounded-3xl border border-stone-200 shadow-2xl p-12 text-center space-y-8"
+        >
+          <div className="inline-flex items-center justify-center w-24 h-24 bg-red-50 text-red-500 rounded-full mb-4">
+            <AlertTriangle size={48} />
+          </div>
+          
+          <div className="space-y-4">
+            <h2 className="text-3xl font-black text-stone-900 tracking-tight">
+              Te quedaste sin diagnósticos disponibles.
+            </h2>
+            <p className="text-lg text-stone-500 leading-relaxed">
+              Has usado todas las licencias de tu plan actual. Para continuar generando diagnósticos financieros con IA, mejora tu plan ahora.
+            </p>
+          </div>
+
+          <div className="pt-4">
+            <a 
+              href={WHATSAPP_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-3 bg-[#10069f] text-white px-10 py-4 rounded-xl font-black uppercase tracking-widest hover:bg-[#0a0466] transition-all shadow-xl"
+            >
+              Compra tu plan aquí
+            </a>
+          </div>
+
+          <div className="pt-8 border-t border-stone-100">
+            <p className="text-xs text-stone-400 font-bold uppercase tracking-widest">
+              Uso actual: {user.diagnoses_count} de {effectiveLimit} licencias
+            </p>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-5xl mx-auto">
       <div className="mb-8">
@@ -180,6 +300,51 @@ export default function NewDiagnosis({ user, onUpdateUser }: { user: any; onUpda
                 <div className="space-y-1">
                   <h3 className="text-xl font-bold text-indigo-900">Información de la Empresa</h3>
                   <p className="text-stone-500 text-sm">Por favor, proporciona algunos detalles generales sobre tu empresa.</p>
+                </div>
+
+                {/* PDF Upload Section */}
+                <div className="p-6 bg-indigo-50/50 border-2 border-dashed border-indigo-200 rounded-2xl space-y-4">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center text-[#10069f]">
+                      <FileText size={24} />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-bold text-indigo-900">Carga tus Estados Financieros (Opcional)</h4>
+                      <p className="text-xs text-indigo-600">Sube un PDF para que nuestra IA extraiga los datos automáticamente.</p>
+                    </div>
+                  </div>
+                  
+                  <div className="relative">
+                    <input 
+                      type="file" 
+                      accept=".pdf" 
+                      onChange={handleFileUpload}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                      disabled={pdfLoading}
+                    />
+                    <div className={cn(
+                      "w-full py-4 rounded-xl border border-indigo-200 flex items-center justify-center gap-2 transition-all",
+                      pdfLoading ? "bg-indigo-100" : pdfSuccess ? "bg-emerald-50 border-emerald-200" : "bg-white hover:bg-indigo-50"
+                    )}>
+                      {pdfLoading ? (
+                        <>
+                          <Loader2 className="animate-spin text-[#10069f]" size={20} />
+                          <span className="text-sm font-bold text-[#10069f]">Procesando documento...</span>
+                        </>
+                      ) : pdfSuccess ? (
+                        <>
+                          <CheckCircle2 className="text-emerald-600" size={20} />
+                          <span className="text-sm font-bold text-emerald-600">¡Datos extraídos con éxito!</span>
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="text-[#10069f]" size={20} />
+                          <span className="text-sm font-bold text-[#10069f]">Seleccionar PDF</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  <p className="text-[10px] text-stone-400 text-center">Formatos soportados: PDF. Tamaño máximo: 10MB.</p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

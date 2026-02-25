@@ -101,3 +101,79 @@ export async function generateFinancialDiagnosis(companyInfo: any, data: Financi
     throw new Error("La respuesta de la IA no es un JSON válido");
   }
 }
+
+export async function extractFinancialDataFromPDF(base64PDF: string) {
+  const prompt = `
+    Analiza el documento PDF adjunto que contiene estados financieros.
+    Extrae la información necesaria para completar un diagnóstico financiero.
+    
+    Busca datos de hasta 3 periodos (años o meses).
+    
+    Debes devolver un objeto JSON con el siguiente formato exacto:
+    {
+      "companyName": string,
+      "sector": string,
+      "yearConstituted": number,
+      "data": [
+        {
+          "period": string (ej. "2023"),
+          "incomeStatement": {
+            "operatingIncome": number,
+            "nonOperatingIncome": number,
+            "costs": number,
+            "adminExpenses": number,
+            "salesExpenses": number,
+            "interest": number,
+            "nonOperatingExpenses": number,
+            "taxes": number
+          },
+          "balanceSheet": {
+            "currentAssets": number,
+            "nonCurrentAssets": number,
+            "accountsReceivable": number,
+            "totalAssets": number,
+            "currentLiabilities": number,
+            "nonCurrentLiabilities": number,
+            "accountsPayable": number,
+            "totalLiabilities": number,
+            "equity": number
+          }
+        }
+      ]
+    }
+
+    Si algún dato no se encuentra, coloca 0. Asegúrate de que los totales (totalAssets, totalLiabilities) sean la suma de sus partes.
+  `;
+
+  const response = await ai.models.generateContent({
+    model: "gemini-3-flash-preview",
+    contents: {
+      parts: [
+        {
+          inlineData: {
+            mimeType: "application/pdf",
+            data: base64PDF,
+          },
+        },
+        {
+          text: prompt,
+        },
+      ],
+    },
+    config: {
+      responseMimeType: "application/json",
+    },
+  });
+
+  const text = response.text;
+  if (!text) throw new Error("No se pudo extraer información del PDF");
+
+  try {
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    const cleanJson = jsonMatch ? jsonMatch[0] : text;
+    return JSON.parse(cleanJson);
+  } catch (e) {
+    console.error("Failed to parse Gemini PDF extraction response:", text);
+    throw new Error("Error al procesar los datos del PDF");
+  }
+}
