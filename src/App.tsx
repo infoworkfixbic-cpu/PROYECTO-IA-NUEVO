@@ -51,7 +51,8 @@ export default function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={user ? <Navigate to="/dashboard" /> : <Landing />} />
+        <Route path="/" element={user ? <Navigate to="/dashboard" /> : <Navigate to="/nosotros" />} />
+        <Route path="/nosotros" element={<Landing user={user} />} />
         <Route path="/login" element={user ? <Navigate to="/dashboard" /> : <Login onLogin={handleLogin} />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
         

@@ -14,7 +14,7 @@ export default function Layout({ user, onLogout }: { user: any; onLogout: () => 
 
   const handleLogout = () => {
     onLogout();
-    navigate("/login");
+    navigate("/nosotros");
   };
 
   return (
@@ -36,6 +36,10 @@ export default function Layout({ user, onLogout }: { user: any; onLogout: () => 
         </div>
 
         <nav className="flex-1 p-4 space-y-2">
+          <Link to="/nosotros" className="flex items-center gap-3 p-3 rounded-lg text-white/70 hover:bg-white/10 hover:text-white transition-all font-medium">
+            <TrendingUp size={20} />
+            <span>Nosotros</span>
+          </Link>
           <Link to="/dashboard" className="flex items-center gap-3 p-3 rounded-lg text-white/70 hover:bg-white/10 hover:text-white transition-all font-medium">
             <LayoutDashboard size={20} />
             <span>Dashboard</span>
